@@ -1,0 +1,16 @@
+[project]
+name = "memory-python-todo-app"
+version = "0.1.0"
+description = "Todo In-Memory Python Console App (Hackathon II Phase I)"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [
+    {name = "Todo App Team", email = "todo@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = []
