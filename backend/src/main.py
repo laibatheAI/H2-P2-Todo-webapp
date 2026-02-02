@@ -26,13 +26,26 @@ app = FastAPI(
 )
 
 # Add security-related middleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*.hf.space", "localhost", "127.0.0.1"]
+)
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=[
+        "http://localhost:3000",
+        "https://h2-p2-todo-webapp.vercel.app",
+        "https://*.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Add routes
 app.include_router(auth_router)

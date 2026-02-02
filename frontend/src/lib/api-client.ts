@@ -15,6 +15,7 @@ class ApiClient {
   private client: AxiosInstance;
   private token: string | null = null;
 
+  
   // constructor() {
   //   this.client = axios.create({
   //     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
@@ -22,10 +23,10 @@ class ApiClient {
   //   });
 
   constructor() {
-  this.client = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL!,
-    timeout: 15000,
-  });
+    this.client = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      timeout: 15000, // Increased timeout to 15 seconds
+    });
 
     // Initialize token from localStorage if available
     if (typeof window !== 'undefined') {
