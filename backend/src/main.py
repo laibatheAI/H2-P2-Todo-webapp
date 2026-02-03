@@ -2,6 +2,10 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 from .api.auth import router as auth_router
 from .api.tasks import router as tasks_router
 from .database.init_db import create_db_and_tables
@@ -17,6 +21,21 @@ async def lifespan(app: FastAPI):
     # Cleanup on shutdown if needed
     logger.info("Shutting down Todo API application")
 
+# Custom middleware to handle proxy headers from HuggingFace
+class ProxyHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Check for forwarded protocol headers from HuggingFace proxy
+        forwarded_proto = request.headers.get('x-forwarded-proto')
+
+        # If the request came through HTTPS originally but FastAPI sees it as HTTP,
+        # we need to handle this appropriately for redirects and URL generation
+        if forwarded_proto and forwarded_proto.lower() == 'https':
+            # Update the request's scope to reflect the original HTTPS protocol
+            request.scope['scheme'] = 'https'
+
+        response = await call_next(request)
+        return response
+
 # Create FastAPI app with security-focused settings
 app = FastAPI(
     title="Todo API",
@@ -25,20 +44,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add security-related middleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
+# Add custom ProxyHeadersMiddleware to handle X-Forwarded-* headers from HuggingFace proxy
+app.add_middleware(ProxyHeadersMiddleware)
 
+# Add TrustedHostMiddleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*.hf.space", "localhost", "127.0.0.1"]
+    allowed_hosts=["*.hf.space", "localhost", "127.0.0.1", "*.vercel.app"]
 )
 
-
+# Add CORS middleware with HTTPS origins only for production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://h2-p2-todo-webapp.vercel.app",
         "https://*.vercel.app",
     ],
     allow_credentials=True,
