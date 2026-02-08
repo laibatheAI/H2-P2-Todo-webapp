@@ -1,85 +1,50 @@
-from .storage import TaskManager
-from .cli import display_menu, display_tasks, prompt_add_task, prompt_task_id, prompt_update_fields, confirm_delete
-from .models import Task
+from fastapi import FastAPI, Depends, Path, HTTPException, status
+from typing import Dict, Any
+import time
+import uuid
+from datetime import datetime
 
+import os
+from dotenv import load_dotenv
 
-def main():
-    """
-    Main application entry point and execution flow control.
-    """
-    print("Welcome to the Todo App!")
-    task_manager = TaskManager()
+# Load environment variables
+load_dotenv()
 
-    while True:
-        display_menu()
-        try:
-            choice = input("Choose an option: ").strip()
+app = FastAPI(
+    title="Todo AI Chatbot API",
+    description="Stateless Todo AI Chatbot with MCP tools integration",
+    version="1.0.0"
+)
 
-            if choice == "1":
-                # Add task
-                try:
-                    title, description = prompt_add_task()
-                    task = task_manager.add_task(title, description)
-                    print(f"Task added successfully with ID {task.id}")
-                except ValueError as e:
-                    print(f"Error: {e}")
+@app.get("/")
+def read_root():
+    return {"Hello": "Todo AI Chatbot"}
 
-            elif choice == "2":
-                # View all tasks
-                tasks = task_manager.list_tasks()
-                display_tasks(tasks)
+# Include routes here once they are created
+try:
+    # Import specific functions to adapt the backend router to the required path structure
+    from backend.api.v1.endpoints.chat import chat_endpoint as backend_chat_endpoint, chat_health_check
+    from backend.schemas.chat import ChatRequest
 
-            elif choice == "3":
-                # Update task
-                try:
-                    task_id = prompt_task_id()
-                    task = task_manager.get_task(task_id)
-                    print(f"Current task: {task.title}")
+    # Create the exact endpoint as specified: POST /api/{user_id}/chat
+    @app.post("/api/{user_id}/chat", tags=["chat"])
+    async def chat_endpoint_wrapper(
+        user_id: str = Path(..., description="The unique identifier of the authenticated user"),
+        chat_request: ChatRequest = None
+    ):
+        # Forward to the backend implementation, adapting the path parameter
+        return await backend_chat_endpoint(user_id, chat_request)
 
-                    new_title, new_description = prompt_update_fields()
-                    updated_task = task_manager.update_task(task_id, new_title, new_description)
-                    print(f"Task {task_id} updated successfully")
-                except ValueError as e:
-                    print(f"Error: {e}")
+    # Also expose health check at the expected path
+    @app.get("/api/{user_id}/chat/health", tags=["chat"])
+    async def health_check_endpoint(
+        user_id: str = Path(..., description="The unique identifier of the user (for path validation)")
+    ):
+        return await chat_health_check(user_id)
 
-            elif choice == "4":
-                # Mark task as complete/incomplete
-                try:
-                    task_id = prompt_task_id()
-                    task = task_manager.get_task(task_id)
-                    updated_task = task_manager.toggle_complete(task_id)
-                    status = "completed" if updated_task.completed else "incomplete"
-                    print(f"Task {task_id} marked as {status}")
-                except ValueError as e:
-                    print(f"Error: {e}")
-
-            elif choice == "5":
-                # Delete task
-                try:
-                    task_id = prompt_task_id()
-                    task = task_manager.get_task(task_id)
-                    if confirm_delete(task):
-                        task_manager.delete_task(task_id)
-                        print(f"Task {task_id} deleted successfully")
-                    else:
-                        print("Deletion cancelled")
-                except ValueError as e:
-                    print(f"Error: {e}")
-
-            elif choice == "6":
-                # Exit
-                print("Thank you for using the Todo App. Goodbye!")
-                break
-
-            else:
-                print("Invalid option. Please choose a number between 1-6.")
-
-        except KeyboardInterrupt:
-            print("\n\nApplication interrupted. Goodbye!")
-            break
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-
+except ImportError as e:
+    print(f"Chat router not available yet: {e}")
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

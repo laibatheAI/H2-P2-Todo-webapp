@@ -75,7 +75,7 @@ export default function DashboardLayout({
                   <button
                     onClick={() => router.push('/dashboard')}
                     className={`font-medium transition-colors duration-200 ${
-                      pathname === '/dashboard/tasks/create'
+                      pathname === '/dashboard'
                         ? darkMode
                           ? 'text-indigo-300 border-b-2 border-indigo-300 pb-1'
                           : 'text-indigo-600 border-b-2 border-indigo-600 pb-1'
@@ -100,6 +100,22 @@ export default function DashboardLayout({
                     }`}
                   >
                     Create Task
+                  </button>
+
+                  {/* ChatBubby Tab */}
+                  <button
+                    onClick={() => {
+                      // Trigger the chat interface by calling the global function
+                      // We'll add a global event listener to handle this
+                      window.dispatchEvent(new CustomEvent('open-chatbubby'));
+                    }}
+                    className={`font-medium transition-colors duration-200 ${
+                      darkMode
+                        ? 'text-gray-300 hover:text-purple-400'
+                        : 'text-gray-700 hover:text-indigo-600'
+                    }`}
+                  >
+                    ChatBubby
                   </button>
                 </div>
 
@@ -249,6 +265,17 @@ export default function DashboardLayout({
                     }`}
                   >
                     Dashboard
+                  </button>
+
+                  {/* ChatBubby Option for Mobile */}
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('open-chatbubby'));
+                      closeMobileMenu();
+                    }}
+                    className="px-4 py-3 rounded-lg text-left transition-colors duration-200 font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700"
+                  >
+                    ChatBubby
                   </button>
                 </div>
 
